@@ -102,21 +102,18 @@ def allocate(rooms, students, course_name,date,time):
     #For courses like EEE F244/ ECE F244/ INSTR F244
     #print(course_name)
     related_courses = [course.strip() for course in course_name.split('/ ')]
-    #print(related_courses)
+    print(related_courses)
     if(len(related_courses)>1):
         equivalent_course = True
 
     course_students = students[students['Subject_Catalog'].isin(related_courses)]
-    
+    print("LENGTH OF COURSE",len(course_students))
     if course_students.empty:
         print("No students found for the exact course or related courses.")
 
     course_rooms = rooms[rooms['Course'] == course_name]
     #print("COURSE ROOMS:", course_rooms)
     seat_allocation = []
-    #print(students['Subject_Catalog'])
-    #print("CHECK THIS!\n",course_students)
-    #print(course_rooms)
 
     #Initialize room status csv to store in time slot which rooms filled and which have more space
     update_room_csv()

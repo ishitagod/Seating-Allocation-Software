@@ -208,11 +208,15 @@ def validate_time_slot():
             return time_slot  # If valid, return it
         print("Invalid time slot format! Please enter in 'HH:MM AM/PM - HH:MM AM/PM' format.")
 
+
 def validate_course_number():
-    """Keep prompting the user until a valid course number is entered in 'ABC G123' format."""
-    course_pattern = r'^[A-Z]{2,3} [A-Z]\d{3}$'
+    """Keep prompting the user until a valid course number is entered in 'ABC G123' format or multiple courses separated by '/'."""
+    course_pattern = r'^([A-Z]{2,5} [A-Z]\d{3})(?:\s*/\s*[A-Z]{2,5} [A-Z]\d{3})*$'
+    
     while True:  # 🔹 Added loop for validation
-        course_number = input("Please enter the course number (e.g., 'MEL G642'): ").strip()
+        course_number = input("Please enter the course number (e.g., 'MEL G642' or 'ECON F354/ FIN F311'): ").strip()
+        
         if re.match(course_pattern, course_number):
             return course_number  # If valid, return it
-        print("Invalid course number format! Please enter in 'ABC G123' format.")
+        
+        print("Invalid course number format! Please enter in 'ABC G123' or 'ABC G123/ XYZ F456' format.")

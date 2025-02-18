@@ -25,12 +25,15 @@ def main(regdata_file_path, rooms_file_path):
     #Ask user which mode
     while True:
         exam_title = input("Enter which exam (Midsemester or Comprehensive) to generate seating arrangment for \n*NOTE: This will be reflected in all PDFs generated*: ")
-        mode_choice = input(f"Choose seating arrangement for {exam_title}: (1) Serial Order (2) Random Order (Enter 1 or 2): ").strip()
+        mode_choice = input(f"Choose seating arrangement for {exam_title}: (1) Serial Order (2) Random Order (3) Randomize in Zones (Enter 1 or 2 or 3): ").strip()
         if mode_choice == '1':
             seating_mode = "serial"
             break
         elif mode_choice == '2':
             seating_mode = "random"
+            break
+        elif mode_choice =='3':
+            seating_mode = "random_zone"
             break
         else:
             print("Invalid choice. Please enter 1 or 2.")
@@ -197,6 +200,8 @@ def process_course(course_name, regdata, room_data, rooms_file_path, time_slot, 
     if seating_mode == "random":
         output = shuffle_within_rooms(output) #random within rooms
         #print(f"OUTPUT HEAD for random seating arrangment:\n", output.head())
+    elif seating_mode == "random_zone":
+        output = shuffle_within_zones(output) #random within rooms
 
     
     create_pdf(output, time_slot, date, IC_name, Course_title,course_name, regdata, exam_title)     #regdata needed for course numbers - equivalent courses
