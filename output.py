@@ -12,10 +12,9 @@ from PyPDF2 import PdfMerger #combine PDFs
 from data_ops import * 
 from shared import errors_dict
 
+#IC PDF
 def create_pdf(df,time_slot, date, IC_name, Course_title, course_num, regdata, exam_title="COMPREHENSIVE EXAMINATION SEMESTER I 24-25"):
     # Create the PDF document
-
-    
     if not os.path.exists("Output\\Student Seating"):
         os.makedirs("Output\\Student Seating")
     
@@ -50,23 +49,21 @@ def create_pdf(df,time_slot, date, IC_name, Course_title, course_num, regdata, e
     # Base path for date folders
     base_path = "Output/IC/"
     full_path = os.path.join(base_path, folder_name)
-
+    
     # Ensure the date folder exists
     os.makedirs(full_path, exist_ok=True)
-    #print(df.head())
 
-    # Add a header image
-    header_image_path = "data\\bits_logo.jpeg"
-    header_image = Image(header_image_path, 1.5*inch, 1.5*inch)
-
+    student_count = len(df)
     # Add a text header
     styles = getSampleStyleSheet()
     header = Paragraph(exam_title, styles['Title'])  #Header text
+    elements.append(header)
     header_data = [
-        [Paragraph(f"<b>Course No & Title:</b> {Course_title}", styles['Normal'])],
+        [Paragraph(f"<b>Course No & Title:</b> {course_num} {Course_title}", styles['Normal'])],
         [Paragraph(f"<b>Date:</b> {date}", styles['Normal']),
-         Paragraph(f"<b>Time:</b> {time_slot}", styles['Normal']), 
-         Paragraph(f"<b>IC: {IC_name}</b>", styles['Normal'])]
+         Paragraph(f"<b>Time:</b> {time_slot}", styles['Normal'])], 
+         [Paragraph(f"<b>IC: {IC_name}</b>", styles['Normal']),
+         Paragraph(f"<b>Total Students:</b> {student_count}", styles['Normal'])]
     ]
     try:
         course_name = df['Course'][0] # Assuming the course name is in the 'Course' column
@@ -82,14 +79,21 @@ def create_pdf(df,time_slot, date, IC_name, Course_title, course_num, regdata, e
             # If course doesn't exist, create a new key-value pair
             errors_dict[course_num] = e
         return 0
-    
-    header_table = Table(header_data, colWidths=[4 * inch, 4 * inch])  # Full width
+    # Define margins for the PDF
+    left_margin = 0.5 * inch
+    right_margin = 0.5 * inch
+    available_width = letter[0] - (left_margin + right_margin)
+
+    header_table = Table(
+        header_data,
+        colWidths=[available_width * 0.50, available_width * 0.30, available_width * 0.20]
+    )
+
     header_table.setStyle(TableStyle([
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE')  # Align the text vertically with the image
     ]))
     
     # Build the PDF
-    # pdf.build(elements)
     elements.append(header_table)
 
     # Add some space after the header
@@ -110,12 +114,18 @@ def create_pdf(df,time_slot, date, IC_name, Course_title, course_num, regdata, e
     style = TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.grey),          # Header background color
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),     # Header text color
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),                   # Align text to left
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),                 # Align text to center
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),       # Header font
         ('BOTTOMPADDING', (0, 0), (-1, 0), 12),                # Padding for the header row
         ('BACKGROUND', (0, 1), (-1, -1), colors.beige),        # Background color for other rows
         ('GRID', (0, 0), (-1, -1), 1, colors.black),           # Adding grid lines to make table lines prominent
     ])
+    table.setStyle(style)
+
+    # Add alternating row colors
+    for i in range(1, len(data)):
+        bg_color = colors.beige if i % 2 == 0 else colors.white
+        style.add('BACKGROUND', (0, i), (-1, i), bg_color)
     table.setStyle(style)
 
     # Add table to the PDF
@@ -160,12 +170,16 @@ def create_pdf(df,time_slot, date, IC_name, Course_title, course_num, regdata, e
     
     #output_path = f"Output\\IC\\{course_name}.pdf"
     #pdf = SimpleDocTemplate(output_path, pagesize=letter)
-    pdf = SimpleDocTemplate(pdf_path, pagesize=letter)
+    pdf = SimpleDocTemplate(pdf_path, pagesize=letter,leftMargin=0.1*inch,
+        rightMargin=0.1*inch,
+        topMargin=0.2*inch,      # <<--- Reduce this to lower the space at the top
+        bottomMargin=0.2*inch
+)
     # Build the PDF
     pdf.build(elements)
     print(f"*****Created the IC pdf for {course_name}!*****")
 
-
+#OUTPUT EXCEL
 def create_output_excel(output_df,file_path="Output\\output_file.xlsx"):
     # Create a new output Excel file
     print("****CREATING EXCEL NOW!****")
@@ -244,15 +258,12 @@ def generate_room_pdfs(seat_allocation_df, time_slot, date, IC_name, Course_titl
         else:
             # If course doesn't exist, create a new key-value pair
             errors_dict[course_num] = e
-
         return 0
 
 def create_attendance_pdfs(room_num, df, time_slot, date, IC_name, Course_title, course_num, exam_title="COMPREHENSIVE EXAMINATION SEMESTER I 24-25"):
     """ Create a PDF for a single room with signature boxes and updated header format. """
     course_name = df['Course'].values[0]
     elements = []
-
-
 
     # Header styling and content
     styles = getSampleStyleSheet()
@@ -277,6 +288,7 @@ def create_attendance_pdfs(room_num, df, time_slot, date, IC_name, Course_title,
     # Add header spacing
     elements.append(Spacer(1, 0.1 * inch))
 
+    
     # Convert header data into a table
     header_table = PlatypusTable([[header_data]])
     header_table.setStyle(TableStyle([
@@ -353,11 +365,8 @@ def create_attendance_pdfs(room_num, df, time_slot, date, IC_name, Course_title,
             # If course doesn't exist, create a new key-value pair
             errors_dict[course_num] = e
 
-
         output_path = f"Output\\Student Seating\\{course_name}_Seating_Plan_{room_num}.pdf"
         pdf = SimpleDocTemplate(output_path, pagesize=letter)
-    
-
 
     # Add the table to the PDF
     elements.append(table)
@@ -367,7 +376,7 @@ def create_attendance_pdfs(room_num, df, time_slot, date, IC_name, Course_title,
     print(f"Created {course_num} PDF for room: {room_name}!")
     return output_path
 
-
+#COMBINED SEATING PDF
 def combine_pdfs(pdf_paths, output_path):
     """ Combine multiple PDFs into a single PDF with each starting on a new page. """
     merger = PdfMerger()
