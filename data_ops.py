@@ -100,15 +100,13 @@ def process_room_capacity(course_name, room_name, input_file_path="data/input-fi
     
     rooms_expanded[['Room', 'Capacity']] = rooms_expanded['Rooms'].str.extract(r'([A-Za-z0-9]+)\s*\((\d+)\)')
     rooms_expanded['Capacity'] = rooms_expanded['Capacity'] # Convert capacity to integer
-
+    
     # Aggregate capacity by Room, Date, and Time
     aggregated_capacity = (
         rooms_expanded.groupby(['Room', 'Date', 'Time'])['Capacity']
         .sum()
         .reset_index()
     )
-    #print("aggregated: ", aggregated_capacity)
-    
     
     course_data = data[data['courseno'] == course_name]
     time_slot = course_data['Time'].values[0]
@@ -122,10 +120,12 @@ def process_room_capacity(course_name, room_name, input_file_path="data/input-fi
                 (aggregated_capacity['Date'] == date) &
                 (aggregated_capacity['Time'] == time_slot)
             ]['Capacity']
+            .astype(int)
             .sum()
         )
+        print("CC_TOTAL_CAPACITY",cc_total_capacity)
         return cc_total_capacity
-    
+        
     cap = aggregated_capacity[(aggregated_capacity['Room'] == room_name) & (aggregated_capacity['Time']==time_slot) & (aggregated_capacity['Date']==date)]['Capacity']
 
     return cap.iloc[0]
