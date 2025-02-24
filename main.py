@@ -44,6 +44,8 @@ def main(regdata_file_path, rooms_file_path):
         # Ask the user for choice: Time slot or Course Number
         if os.path.exists("Output\\output_file.xlsx"):
             os.remove("Output\\output_file.xlsx")
+        if os.path.exists("data\\room_status.csv"):
+            os.remove("data\\room_status.csv")
         choice = input("Would you like to generate seating by (1) Time Slot, (2) Course Number, (3) All Courses on a Day, or (4) All Dates? (Enter 1, 2, 3, or 4): ").strip()
         
         room_data = pd.read_excel(rooms_file_path)

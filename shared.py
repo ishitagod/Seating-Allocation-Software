@@ -5,9 +5,9 @@ errors_dict = {}
 LT_names = ["LT1","LT2","LT3","LT4"]
 DLT_names = ["DLT5","DLT6","DLT7","DLT8","DLT10"]
 CC_lab = {
-    "CCz1": "CC LAB-ZONE 1",
-    "CCz2": "CC LAB-ZONE 2",
-    "CCz3": ["CC LAB-ZONE 3A", "CC LAB-ZONE 3B"]
+    'CCz1': "CC LAB-ZONE 1",
+    'CCz2': "CC LAB-ZONE 2",
+    'CCz3': ["CC LAB-ZONE 3A", "CC LAB-ZONE 3B"]
 }
 #Rooms to Zone mapping
 ROOM_ZONES = {
@@ -20,3 +20,5 @@ ROOM_ZONES = {
     "LT1_LT2": ["LT1", "LT2"],
     "LT3_LT4": ["LT3", "LT4"],
 }
+
+course_count=0
