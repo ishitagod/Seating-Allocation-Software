@@ -13,7 +13,7 @@ from data_ops import *
 from shared import errors_dict
 
 #IC PDF
-def create_pdf(df,time_slot, date, IC_name, Course_title, course_num, regdata, exam_title="COMPREHENSIVE EXAMINATION SEMESTER I 24-25"):
+def create_pdf(df,time_slot, date, IC_name, Course_title, course_num, regdata, course_count, exam_title="COMPREHENSIVE EXAMINATION SEMESTER I 24-25"):
     # Create the PDF document
     if not os.path.exists("Output\\Student Seating"):
         os.makedirs("Output\\Student Seating")
@@ -177,6 +177,26 @@ def create_pdf(df,time_slot, date, IC_name, Course_title, course_num, regdata, e
 )
     # Build the PDF
     pdf.build(elements)
+    if(student_count != course_count):
+        print(f"Total count of students for course & count of allocations doesn't match for:{course_num}, should be {course_count} is {student_count}")
+        if course_num in errors_dict:
+            # If the value is not already a list, convert it to a list
+            if not isinstance(errors_dict[course_num], list):
+                errors_dict[course_num] = [errors_dict[course_num]]
+            # Append the new error to the list
+            errors_dict[course_num].append(f"Count doesn't match")
+        else:
+            # If course doesn't exist, create a new key-value pair
+            if course_num in errors_dict:
+            # If the value is not already a list, convert it to a list
+                if not isinstance(errors_dict[course_num], list):
+                    errors_dict[course_num] = [errors_dict[course_num]]
+            # Append the new error to the list
+                errors_dict[course_num].append(f"Count doesn't match should be {course_count} is {student_count}")
+            else:
+            # If course doesn't exist, create a new key-value pair
+                errors_dict[course_num] = f"COUNT NOT MATCHING should be {course_count} is {student_count}"
+
     print(f"*****Created the IC pdf for {course_name}!*****")
 
 #OUTPUT EXCEL
@@ -226,7 +246,7 @@ def create_output_excel(output_df,file_path="Output\\output_file.xlsx"):
 
 
 
-def generate_room_pdfs(seat_allocation_df, time_slot, date, IC_name, Course_title,course_num,exam_title):
+def generate_room_pdfs(seat_allocation_df, time_slot, date, IC_name, Course_title,course_num,course_count,exam_title):
     """ Generate a PDF for each room's seating arrangement. """
     print("****ENTERED GENERATING ROOM PDFS****")
     try:
@@ -355,15 +375,7 @@ def create_attendance_pdfs(room_num, df, time_slot, date, IC_name, Course_title,
     except Exception as e:
         # Handle the error and fallback to a default path
         print(f"Error occurred while creating the PDF at the specified path: {e}")
-        if course_num in errors_dict:
-            # If the value is not already a list, convert it to a list
-            if not isinstance(errors_dict[course_num], list):
-                errors_dict[course_num] = [errors_dict[course_num]]
-            # Append the new error to the list
-            errors_dict[course_num].append(f"Create Attendance PDF & {e}")
-        else:
-            # If course doesn't exist, create a new key-value pair
-            errors_dict[course_num] = e
+        
 
         output_path = f"Output\\Student Seating\\{course_name}_Seating_Plan_{room_num}.pdf"
         pdf = SimpleDocTemplate(output_path, pagesize=letter)
