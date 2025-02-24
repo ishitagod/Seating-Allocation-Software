@@ -99,7 +99,7 @@ def process_room_capacity(course_name, room_name, input_file_path="data/input-fi
     # Split room and capacity
     
     rooms_expanded[['Room', 'Capacity']] = rooms_expanded['Rooms'].str.extract(r'([A-Za-z0-9]+)\s*\((\d+)\)')
-    rooms_expanded['Capacity'] = rooms_expanded['Capacity'] # Convert capacity to integer
+    rooms_expanded['Capacity'] = rooms_expanded['Capacity'].astype(int) # Convert capacity to integer
     
     # Aggregate capacity by Room, Date, and Time
     aggregated_capacity = (
@@ -113,7 +113,6 @@ def process_room_capacity(course_name, room_name, input_file_path="data/input-fi
     date = course_data['Date'].values[0]
     
     if room_name.lower() == "cc":
-        # Calculate CC total capacity for the specified Date and Time
         cc_total_capacity = (
             aggregated_capacity[
                 (aggregated_capacity['Room'].str.startswith('CC')) &

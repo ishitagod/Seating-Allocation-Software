@@ -7,8 +7,9 @@ import random
 from data_ops import *
 from output import *
 time_slot=None
-from shared import errors_dict, ROOM_ZONES # variable to understand which courses are throwing errors
+from shared import errors_dict, ROOM_ZONES,course_count # variable to understand which courses are throwing errors
 seating_mode = None
+
 
 # With time slots or specific course selection
 def main(regdata_file_path, rooms_file_path):
@@ -49,7 +50,7 @@ def main(regdata_file_path, rooms_file_path):
         choice = input("Would you like to generate seating by (1) Time Slot, (2) Course Number, (3) All Courses on a Day, or (4) All Dates? (Enter 1, 2, 3, or 4): ").strip()
         
         room_data = pd.read_excel(rooms_file_path)
-
+        
         if choice == '1':  # Generate by Time Slot
             date = validate_date()
             time_slot = validate_time_slot()
@@ -58,7 +59,7 @@ def main(regdata_file_path, rooms_file_path):
                 break
             
             courses_in_slot = room_data[(room_data['Date'] == date) & (room_data['Time'] == time_slot)]
-
+            
             if courses_in_slot.empty:
                 print(f"No courses found for this slot {date} & {time_slot}.")
                 continue
@@ -105,9 +106,11 @@ def main(regdata_file_path, rooms_file_path):
                 start_time = course['Time'].split(" - ")[0]
                 if "AM" in start_time:
                     morning_courses.append(course)
+                    
                 else:
                     afternoon_courses.append(course)
-
+                    
+            
             # Process morning courses
             for course in morning_courses:
                 course_name = course['courseno']
@@ -115,8 +118,6 @@ def main(regdata_file_path, rooms_file_path):
                 process_course(course_name, regdata, room_data, rooms_file_path, time_slot,date,seating_mode)
 
             if os.path.exists("data\\room_status.csv"):
-                df = pd.read_csv("data\\room_status.csv")
-                
                 os.remove("data\\room_status.csv")
 
             # Process afternoon courses
@@ -129,8 +130,6 @@ def main(regdata_file_path, rooms_file_path):
             unique_dates = room_data['Date'].unique()
             for date in unique_dates:
                 if os.path.exists("data\\room_status.csv"):
-                    df = pd.read_csv("data\\room_status.csv")
-                    #print(df)
                     os.remove("data\\room_status.csv")
                 print(f"\nProcessing all courses for date: {date}")
 
@@ -155,8 +154,6 @@ def main(regdata_file_path, rooms_file_path):
                     process_course(course_name, regdata, room_data, rooms_file_path, time_slot,date, seating_mode)
 
                 if os.path.exists("data\\room_status.csv"):
-                    df = pd.read_csv("data\\room_status.csv")
-                    #print(df)
                     os.remove("data\\room_status.csv")
 
                 # Process afternoon courses
@@ -191,11 +188,13 @@ def process_course(course_name, regdata, room_data, rooms_file_path, time_slot, 
     """Helper function to allocate seats and generate PDF for a specific course."""
 
     room_list = read_rooms(rooms_file_path, course_name)
+    print("ROOM LIST", room_list)
     result = room_data[room_data['courseno'] == course_name]
-    #print(result)
+    course_count = result['No. of students'].iloc[0] #total students to be seated in that course
+    
     IC_name = result['IC'].values[0]
     Course_title = result['COURSE TITLE'].values[0]
-
+    
     # Allocate seating and generate PDF for each course
     output = allocate.allocate(room_list, regdata, course_name, date,time_slot)
     #print(f"OUTPUT HEAD for serial seating arrangment:\n", output.head())
@@ -206,8 +205,8 @@ def process_course(course_name, regdata, room_data, rooms_file_path, time_slot, 
         output = shuffle_within_zones(output) #random within rooms
 
     
-    create_pdf(output, time_slot, date, IC_name, Course_title,course_name, regdata, exam_title)     #regdata needed for course numbers - equivalent courses
-    generate_room_pdfs(output, time_slot, date, IC_name, Course_title,course_name, exam_title)
+    create_pdf(output, time_slot, date, IC_name, Course_title,course_name, regdata, course_count, exam_title)     #regdata needed for course numbers - equivalent courses
+    generate_room_pdfs(output, time_slot, date, IC_name, Course_title,course_name, course_count, exam_title)
 
 
 def shuffle_within_rooms(df):

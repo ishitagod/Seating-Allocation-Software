@@ -2,7 +2,7 @@ import pandas as pd
 import os 
 import re
 from data_ops import process_room_capacity, read_room_capacity
-from shared import errors_dict, LT_names, DLT_names, CC_lab
+from shared import errors_dict, LT_names, DLT_names, CC_lab,course_count
 
 def load_cc_seating_arrangement(filepath):
     """ Load seating arrangement for each CC lab zone from the specified file, ignoring the serial column. """
@@ -17,6 +17,72 @@ def load_cc_seating_arrangement(filepath):
 
     return cc_seat_mapping
 
+
+def find_cc_hard_soft(course_name,input_file_path="data/input-file-rooms.xlsx"):
+    data = pd.read_excel(input_file_path)
+    # Expand rooms with capacities into separate rows
+    rooms_expanded = (
+        data.assign(Rooms=data['Rooms'].str.split(','))
+        .explode('Rooms')
+        .reset_index(drop=True)
+    )
+
+    # Split room and capacity
+    rooms_expanded[['Room', 'Capacity']] = rooms_expanded['Rooms'].str.extract(r'([A-Za-z0-9]+)\s*\((\d+)\)')
+    rooms_expanded['Capacity'] = rooms_expanded['Capacity'].astype(int) # Convert capacity to integer
+    
+    # Aggregate capacity by Room, Date, and Time
+    aggregated_capacity = (
+        rooms_expanded.groupby(['Room', 'Date', 'Time'])['Capacity']
+        .sum()
+        .reset_index()
+    )
+    
+    course_data = data[data['courseno'] == course_name]
+    time_slot = course_data['Time'].values[0]
+    date = course_data['Date'].values[0]
+    
+    df = aggregated_capacity[
+    (aggregated_capacity['Room'].str.startswith('CC')) & 
+    (aggregated_capacity['Date'] == date) & 
+    (aggregated_capacity['Time'] == time_slot)
+    ][['Room', 'Capacity']].reset_index(drop=True)
+        # Calculate CC total capacity for the specified Date and Time
+    print(df) 
+
+    #print("CC total capacity for time and day: ",cc_total_capacity)
+
+    cc_filepath_hard= "data\\room_data\\CCLab_HardLimit.xlsx" 
+    cc_filepath_soft="data\\room_data\\CCLab_SoftLimit.xlsx"
+    
+    cc_soft_seats = load_cc_seating_arrangement(cc_filepath_soft)
+    cc_hard_seats = load_cc_seating_arrangement(cc_filepath_hard)
+
+    for _, row in df.iterrows():
+        room_name = row['Room']
+        room_capacity = row['Capacity']
+
+        if room_name in CC_lab:
+            zone_keys = CC_lab[room_name]  # Get zone(s) associated with this CC room
+            
+            if isinstance(zone_keys, list):  # If multiple zones (e.g., CCz3)
+                total_soft_capacity = sum(len(cc_soft_seats.get(zone, [])) for zone in zone_keys)
+                print(total_soft_capacity)
+                #total_hard_capacity = sum(len(cc_hard_seats.get(zone, [])) for zone in zone_keys)
+
+                if room_capacity > total_soft_capacity:
+                    print(f"⚠️  {zone_keys} exceed soft limit! Using Hard Limit file.")
+                    return cc_filepath_hard
+            else:  # If a single zone (e.g., "CCz1")
+                soft_capacity = len(cc_soft_seats.get(zone_keys, []))
+                hard_capacity = len(cc_hard_seats.get(zone_keys, []))
+
+                if room_capacity > soft_capacity:
+                    print(f"⚠️  {zone_keys} exceeds soft limit! Using Hard Limit file.")
+                    return cc_filepath_hard
+    
+    return cc_filepath_soft
+    
 def load_lt_seating_arrangement(filepath):
     """ Load the LT seating arrangement and capacity from the specified file path. """
     # Load the entire Excel sheet
@@ -41,58 +107,58 @@ def load_dlt_seating_arrangement(filepath):
     
     return seating_dict, capacity
 
-def campus_id_key(id):
-    """
-    Generate a sorting key for campus IDs, handling multiple formats like 'A', 'B', 'H', and 'PH'.
-    """
-    year = int(id[:4])  # Extract the year
-    primary_alpha = id[4]  # Determine the primary identifier ('A', 'B', 'H', 'P')
+# def campus_id_key(id):
+#     """
+#     Generate a sorting key for campus IDs, handling multiple formats like 'A', 'B', 'H', and 'PH'.
+#     """
+#     year = int(id[:4])  # Extract the year
+#     primary_alpha = id[4]  # Determine the primary identifier ('A', 'B', 'H', 'P')
 
-    if primary_alpha in ('A', 'B'):
-        numeric_after_alpha = id[5]  # Extract numeric part after 'A' or 'B'
-        secondary_alpha = ''
-        secondary_numeric = None
+#     if primary_alpha in ('A', 'B'):
+#         numeric_after_alpha = id[5]  # Extract numeric part after 'A' or 'B'
+#         secondary_alpha = ''
+#         secondary_numeric = None
 
-        if primary_alpha == 'B':
-            if id[7] == 'A':  # Check for secondary alpha after 'B'
-                secondary_alpha = 'A'
-                if id[8] == 'A':  # Handle 'AA' case
-                    secondary_numeric = 'AA'
-                else:
-                    secondary_numeric = int(id[8]) if id[8].isdigit() else None
-            else:
-                secondary_numeric = (id[7])  # Direct number after 'B', like 'B5'
+#         if primary_alpha == 'B':
+#             if id[7] == 'A':  # Check for secondary alpha after 'B'
+#                 secondary_alpha = 'A'
+#                 if id[8] == 'A':  # Handle 'AA' case
+#                     secondary_numeric = 'AA'
+#                 else:
+#                     secondary_numeric = int(id[8]) if id[8].isdigit() else None
+#             else:
+#                 secondary_numeric = (id[7])  # Direct number after 'B', like 'B5'
 
-        ps_ts = id[6:8] if primary_alpha == 'A' else id[8:10]  # 'PS' or 'TS'
-        ps_ts_priority = 0 if ps_ts == 'PS' else 1  # Prioritize 'PS' (0) over 'TS' (1)
-        last_digits = int(id[-5:-1])  # Extract the last 4 digits
+#         ps_ts = id[6:8] if primary_alpha == 'A' else id[8:10]  # 'PS' or 'TS'
+#         ps_ts_priority = 0 if ps_ts == 'PS' else 1  # Prioritize 'PS' (0) over 'TS' (1)
+#         last_digits = int(id[-5:-1])  # Extract the last 4 digits
 
-        return (
-            year,
-            primary_alpha,
-            numeric_after_alpha,
-            secondary_alpha,
-            secondary_numeric if secondary_numeric is not None else '',
-            ps_ts_priority,
-            last_digits
-        )
+#         return (
+#             year,
+#             primary_alpha,
+#             numeric_after_alpha,
+#             secondary_alpha,
+#             secondary_numeric if secondary_numeric is not None else '',
+#             ps_ts_priority,
+#             last_digits
+#         )
 
-    elif primary_alpha == 'H':
-        # Handle "H" type IDs
-        # Check for variations within "H" type
-        sub_category = id[5:8]  # Extract sub-category (e.g., '103', '106', '123')
-        numeric_section = int(id[8:-1])  # Extract the numeric part
-        return (year, primary_alpha, sub_category, numeric_section)
+#     elif primary_alpha == 'H':
+#         # Handle "H" type IDs
+#         # Check for variations within "H" type
+#         sub_category = id[5:8]  # Extract sub-category (e.g., '103', '106', '123')
+#         numeric_section = int(id[8:-1])  # Extract the numeric part
+#         return (year, primary_alpha, sub_category, numeric_section)
 
-    elif primary_alpha == 'P' and id[5] == 'H':
-        # Handle "PH" type IDs
-        category = id[6:8]  # Extract 'RP' or 'XP'
-        numeric_section = int(id[8:-1])  # Extract numeric part
-        return (year, primary_alpha, category, numeric_section)
+#     elif primary_alpha == 'P' and id[5] == 'H':
+#         # Handle "PH" type IDs
+#         category = id[6:8]  # Extract 'RP' or 'XP'
+#         numeric_section = int(id[8:-1])  # Extract numeric part
+#         return (year, primary_alpha, category, numeric_section)
 
-    else:
-        # Catch-all for unsupported formats
-        return (year, primary_alpha)
+#     else:
+#         # Catch-all for unsupported formats
+#         return (year, primary_alpha)
 
 
 
@@ -107,6 +173,7 @@ def allocate(rooms, students, course_name,date,time):
         equivalent_course = True
 
     course_students = students[students['Subject_Catalog'].isin(related_courses)]
+    course_count = len(course_students)
     print("LENGTH OF COURSE",len(course_students))
     if course_students.empty:
         print("No students found for the exact course or related courses.")
@@ -118,9 +185,8 @@ def allocate(rooms, students, course_name,date,time):
     #Initialize room status csv to store in time slot which rooms filled and which have more space
     update_room_csv()
     
-    
-    student_index = 0
-    
+    student_index = 0    
+
     for _, room in course_rooms.iterrows():
         count_seats = 0
         room_name = room['Rooms']
@@ -130,7 +196,7 @@ def allocate(rooms, students, course_name,date,time):
         #redundant for LT, DLT and CC Lab because of hard & soft limits, useful to check if number of seats accurate acc to assignment given
         #for A & C because overlapping courses and 
 
-        classes_df = pd.read_excel(r"data\room_data\Classrooms.xlsx", skiprows=1, header=None, names=['Room Name', 'Capacity'])
+        #classes_df = pd.read_excel(r"data\room_data\Classrooms.xlsx", skiprows=1, header=None, names=['Room Name', 'Capacity'])
         filled_seats=0
 
         room_status = read_room_status(room_name=room_name)
@@ -212,23 +278,27 @@ def allocate(rooms, students, course_name,date,time):
             dlt_seats, dlt_cap = load_dlt_seating_arrangement(dlt_path)
             
             aggregated_capacity_room = read_room_capacity(room_name,date,time)
-            #print("Full Capacity of Room:", aggregated_capacity_room)
-            #print("aggregated capacity:", aggregated_capacity_room)
+            print("Full Capacity of Room:", aggregated_capacity_room)
+            print("aggregated capacity:", aggregated_capacity_room)
 
             room_stat_df = read_room_status(room_name=room_name)
 
             if room_stat_df is not None:
                 filled_seats = room_stat_df.loc[room_stat_df['Room Name']==room_name,"Filled Seats"].values[0]
     
-            #print(dlt_seats)
+            print(dlt_seats)
             for seat_number in range(filled_seats+1, len(dlt_seats)+1):
-                if ((student_index >= len(course_students))|(seat_number>aggregated_capacity_room)):
+                if(count_seats>=assigned_capacity):
+                    update_room_csv(room_name=room_name, capacity= aggregated_capacity_room,filled_seats=seat_number-1,limit_type=" ")
+                    count_seats=0
+                    break
+                elif ((student_index >= len(course_students))|(seat_number>aggregated_capacity_room)):
                     update_room_csv(room_name=room_name, capacity= aggregated_capacity_room,filled_seats=seat_number-1,limit_type=" ")
                     count_seats=0
                     break
                 actual_seat = dlt_seats.get(seat_number, seat_number)
-                #print("filled seats ",filled_seats,"seat num ", seat_number)
-                #print("actual seat ",actual_seat)
+                print("STUDENT INDEX",student_index,"filled seats ",filled_seats,"seat num ", seat_number)
+                print("actual seat ",actual_seat)
                 student = course_students.iloc[student_index]
                 seat_allocation.append({
                     'System ID' : student['ID'],
@@ -251,44 +321,58 @@ def allocate(rooms, students, course_name,date,time):
             cc_total_capacity = process_room_capacity(course_name,"cc")
             cc_total_capacity=int(cc_total_capacity)
             #print("CC total capacity for time and day: ",cc_total_capacity)
-            cc_filepath = "data\\room_data\\CCLab_HardLimit.xlsx" if cc_total_capacity > 202 else "data\\room_data\\CCLab_SoftLimit.xlsx"
-            cc_seat_mapping = load_cc_seating_arrangement(cc_filepath)
+            #cc_filepath = "data\\room_data\\CCLab_HardLimit.xlsx" if cc_total_capacity > 202 else "data\\room_data\\CCLab_SoftLimit.xlsx"
+            cc_seat_mapping = load_cc_seating_arrangement(find_cc_hard_soft(course_name))
+            #cc_seat_mapping = load_cc_seating_arrangement(cc_filepath)
 
             #number of filled seats from room_status.csv
-            
-
             # Handle CC rooms using specific zones and seating arrangement
             zone_keys = CC_lab[room_name]  # Get zone(s) associated with this CC room
-            # print("zone keys",zone_keys)
-            # print("hello", cc_seat_mapping)
+            #print("zone keys",zone_keys)
+            #print("hello", cc_seat_mapping)
             if isinstance(zone_keys, list):
-                
+                capacity_for_zone_3 = len(cc_seat_mapping.get( "CC LAB-ZONE 3A", []))+len(cc_seat_mapping.get( "CC LAB-ZONE 3B", []))
+                print(capacity_for_zone_3)
                 # Process for rooms with multiple zones (e.g., CCz3 with "CC LAB-ZONE 3A" and "CC LAB-ZONE 3B")
                 for zone in zone_keys:
                     # Strip the last alphabet from the zone name
                     stripped_zone = zone[:-1] if zone[-1].isalpha() else zone
-                    #print("zone: ",zone)
-                    room_stat_df = read_room_status(room_name=stripped_zone)
+                    # print("zone: ",zone)
+                    # print(stripped_zone)
+                    room_stat_df = read_room_status(room_name=stripped_zone) #CHECK THIS COZ NEED TO SEE AGGREGATE CAPACITY OF ZONE 3
+                    print(room_stat_df)
+
                     if room_stat_df is not None:
                         filled_seats = room_stat_df.loc[room_stat_df['Room Name']==stripped_zone,"Filled Seats"].values[0]
-                        #print("filled",filled_seats)
+                        print("filled",filled_seats)
                     else:
                         filled_seats = 0
 
-
+                    
                     seat_numbers = cc_seat_mapping.get(zone, [])
-                    #print("MAPPING",seat_numbers)
+                    capacity_for_zone=len(seat_numbers)
+                    print("MAPPING",seat_numbers)
                     if(zone == "CC LAB-ZONE 3B"): 
                         room_stat_df = read_room_status(room_name=zone)
+                        print(student_index)
                         if room_stat_df is not None:
+                            print(room_stat_df['Room Name']==zone)
                             filled_seats = room_stat_df.loc[room_stat_df['Room Name']==zone,"Filled Seats"].values[0]
                         else:
                             filled_seats = 0
+                            print(f"REACHED FOR {room_name} ")
                     
                     for seat_number in range(filled_seats,len(seat_numbers)):
-                        if student_index >assigned_capacity:
+                        print("studentindex:",student_index,"ASSIGNED:",assigned_capacity,"seat number:",seat_number)
+                        if seat_number >= capacity_for_zone:
+                            print(f"REACHED1 FOR {room_name} ")
                             break
+                        
                         elif student_index >= len(course_students) or filled_seats >= cc_total_capacity:
+                            print(len(course_students))
+                            print(filled_seats)
+                            print(cc_total_capacity)
+                            print(f"REACHED2 FOR {room_name} ")
                             break
                         student = course_students.iloc[student_index]
                         seat_allocation.append({
@@ -300,23 +384,33 @@ def allocate(rooms, students, course_name,date,time):
                             'Room': zone,  # Updated room name to reflect the exact zone
                             'Seat Number': seat_numbers[seat_number]
                         })
+                    
                         student_index += 1
                         filled_seats += 1
-                        
-                    update_room_csv(room_name=stripped_zone, capacity=cc_total_capacity, filled_seats=filled_seats)  # Update room status with exact zone name
-                    update_room_csv(room_name=zone, capacity=assigned_capacity, filled_seats=filled_seats)
+
+                    update_room_csv(room_name=stripped_zone, capacity=capacity_for_zone_3, filled_seats=filled_seats)  # Update room status with exact zone name
+                    update_room_csv(room_name=zone, capacity=capacity_for_zone, filled_seats=filled_seats)
             else:
                 # Process for rooms with a single zone (e.g., CCz1 or CCz2)
-                #print("WE WENT TO ELSE STATEMENT! CC")
+                print("WE WENT TO ELSE STATEMENT! CC")
+                
                 seat_numbers = cc_seat_mapping.get(zone_keys)
+                capacity_for_zone=len(seat_numbers)
                 room_stat_df = read_room_status(room_name=zone_keys)
                 if room_stat_df is not None:
                         filled_seats = room_stat_df.loc[room_stat_df['Room Name']==zone_keys,"Filled Seats"].values[0]
-                        #print("filled IN ELSE",filled_seats)
+                        print("filled IN ELSE",filled_seats)
+                
+                print("studentindex:",student_index,"ASSIGNED:",assigned_capacity)
+                count_seats=0
                 for seat_number in range(filled_seats,len(seat_numbers)):
-                    if student_index >assigned_capacity:
+                    print("studentindex:",student_index,"ASSIGNED:",assigned_capacity,"seat number:",seat_number)
+                    
+                    if seat_number >= capacity_for_zone or count_seats>=assigned_capacity:
+                        print(f"REACHED1 FOR  {room_name}")
                         break
                     elif student_index >= len(course_students) or filled_seats >= cc_total_capacity:
+                        print(f"REACHED2 FOR  {room_name}")
                         break
                     student = course_students.iloc[student_index]
                     seat_allocation.append({
@@ -329,11 +423,14 @@ def allocate(rooms, students, course_name,date,time):
                         'Seat Number': seat_numbers[seat_number]
                     })
                     student_index += 1
+                    count_seats+=1
                     filled_seats += 1
-                update_room_csv(room_name=zone_keys, capacity=assigned_capacity, filled_seats=filled_seats)  # Update room status with exact zone name
+                update_room_csv(room_name=zone_keys, capacity=capacity_for_zone, filled_seats=filled_seats)  # Update room status with exact zone name
 
         elif room_name.startswith('A') or room_name.startswith('C'):
             room_stat_df = read_room_status(room_name=room_name)
+            #print("ROOM STATUS A/C", room_stat_df)
+            #print(assigned_capacity)
             if room_stat_df is not None:
                 filled_seats = room_stat_df.loc[room_stat_df['Room Name']==room_name,"Filled Seats"].values[0]
     
@@ -358,6 +455,7 @@ def allocate(rooms, students, course_name,date,time):
 
     # Create a DataFrame from the seating allocation
     seat_allocation_df = pd.DataFrame(seat_allocation)
+    
     # Display the final seat allocation DataFrame
     return seat_allocation_df
 
@@ -412,3 +510,6 @@ def read_room_status(filepath="data\\room_status.csv", room_name=None):
         print(f"File {filepath} not found. Please initialize the room status CSV.")
         
         return pd.DataFrame(columns=['Room Name', 'Capacity', 'Filled Seats', 'Limit Type'])  # Return an empty DataFrame with headers if file doesn't exist
+
+
+
