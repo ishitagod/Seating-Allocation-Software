@@ -9,8 +9,9 @@ import os
 from datetime import datetime
 import pandas as pd
 from PyPDF2 import PdfMerger #combine PDFs
-from data_ops import * 
+from output_ops import * 
 from shared import errors_dict
+from output_ops import *
 
 #IC PDF
 def create_pdf(df,time_slot, date, IC_name, Course_title, course_num, regdata, course_count, exam_title="COMPREHENSIVE EXAMINATION SEMESTER I 24-25"):

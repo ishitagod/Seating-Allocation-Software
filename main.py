@@ -2,14 +2,11 @@
 Main File takes inputs from commandline
 """
 import allocate
-import pandas as pd
-import random
-from data_ops import *
+from shared import *
+from main_ops import *
 from output import *
 time_slot=None
-from shared import errors_dict, ROOM_ZONES,course_count # variable to understand which courses are throwing errors
 seating_mode = None
-
 
 # With time slots or specific course selection
 def main(regdata_file_path, rooms_file_path):
@@ -25,7 +22,12 @@ def main(regdata_file_path, rooms_file_path):
     global seating_mode, exam_title
     #Ask user which mode
     while True:
-        exam_title = input("Enter which exam (Midsemester or Comprehensive) to generate seating arrangment for \n*NOTE: This will be reflected in all PDFs generated*: ")
+        exam_type = input("Enter 1 for MIDSEMESTER & 2 for COMPREHENSIVE Exam: ").strip()
+        if exam_type in ['1', '2']:
+            break
+        print("Invalid exam type. Please enter 1 or 2.")
+    while True:
+        exam_title = input("Enter what name of exam you want reflected in PDFS: ")
         mode_choice = input(f"Choose seating arrangement for {exam_title}: (1) Serial Order (2) Random Order (3) Randomize in Zones (Enter 1 or 2 or 3): ").strip()
         if mode_choice == '1':
             seating_mode = "serial"
@@ -37,16 +39,12 @@ def main(regdata_file_path, rooms_file_path):
             seating_mode = "random_zone"
             break
         else:
-            print("Invalid choice. Please enter 1 or 2.")
+            print("Invalid choice. Please enter 1 or 2 or 3.")
 
-    
-    
     while True:
         # Ask the user for choice: Time slot or Course Number
-        if os.path.exists("Output\\output_file.xlsx"):
-            os.remove("Output\\output_file.xlsx")
-        if os.path.exists("data\\room_status.csv"):
-            os.remove("data\\room_status.csv")
+        remove_output_file()
+        remove_room_status()
         choice = input("Would you like to generate seating by (1) Time Slot, (2) Course Number, (3) All Courses on a Day, or (4) All Dates? (Enter 1, 2, 3, or 4): ").strip()
         
         room_data = pd.read_excel(rooms_file_path)
@@ -127,44 +125,102 @@ def main(regdata_file_path, rooms_file_path):
                 process_course(course_name, regdata, room_data, rooms_file_path, time_slot,date, seating_mode)
 
         elif choice == '4':  # Generate for all dates in data
-            unique_dates = room_data['Date'].unique()
-            for date in unique_dates:
-                if os.path.exists("data\\room_status.csv"):
-                    os.remove("data\\room_status.csv")
-                print(f"\nProcessing all courses for date: {date}")
-
-                courses_on_date = room_data[room_data['Date']==date].sort_values(by='courseno')
-                if courses_on_date.empty:
-                    continue
+            how_generation = input("Generate all dates at once or one by one? Select 1 for all dates and 2 for one at a time:")
+            if exam_type == '1':#MIDSEM TIME SLOTS different
+                unique_dates = room_data['Date'].unique()
                 
-                morning_courses = []
-                afternoon_courses = []
+                midsem_time_slots = [
+                "9:30 AM - 11:00 AM",
+                "11:30 AM - 01:00 PM",
+                "2:00 PM - 3:30 PM",
+                "4:00 PM - 5:30 PM",
+                "10:00 AM - 1:00 PM",
+                "2:00 PM - 5:00 PM"
+                ]
 
-                for _, course in courses_on_date.iterrows():
-                    start_time = course['Time'].split(" - ")[0]
-                    if "AM" in start_time:
-                        morning_courses.append(course)
-                    else:
-                        afternoon_courses.append(course)
+                for date in unique_dates:
+                    list_of_courses = []
+                    remove_room_status()
+                    print(f"\nProcessing all courses for date: {date}")
 
-                # Process morning courses
-                for course in morning_courses:
-                    course_name = course['courseno']
-                    time_slot = course['Time']
-                    process_course(course_name, regdata, room_data, rooms_file_path, time_slot,date, seating_mode)
+                    for time_slot in midsem_time_slots:
+                        
+                        remove_room_status()
 
-                if os.path.exists("data\\room_status.csv"):
-                    os.remove("data\\room_status.csv")
+                        print(f"\nProcessing Time Slot: {time_slot}")
+                        
+                        # Filter courses for this specific date and time slot
+                        courses_in_slot = room_data[
+                            (room_data['Date'] == date) & (room_data['Time'] == time_slot)
+                        ].sort_values(by='courseno')
 
-                # Process afternoon courses
-                for course in afternoon_courses:
-                    course_name = course['courseno']
-                    time_slot = course['Time']
-                    process_course(course_name, regdata, room_data, rooms_file_path, time_slot,date, seating_mode)
+                        if courses_in_slot.empty:
+                            print(f"No courses found for {date} - {time_slot}. Skipping.")
+                            continue
+
+                        for _, course in courses_in_slot.iterrows():
+                            course_name = course['courseno']
+                            list_of_courses.append(course_name)
+                            process_course(course_name, regdata, room_data, rooms_file_path, time_slot, date, seating_mode)
+
+                        
+                    if os.path.exists("data\\room_status.csv"):
+                            df = pd.read_csv("data\\room_status.csv")
+                            print("Room Status CSV: \n", df)
+                            os.remove("data\\room_status.csv")
+                            
+                            print("✔ Cleared room status for next time slot.")
+                   
+                    print(f"Processing completed for {len(list_of_courses)} course(s): {', '.join(list_of_courses)}")
+                    save_errors()
+                    
+                    if how_generation !='1':
+                        user_choice = input("Do you want to keep generating?y/n: ").strip().lower()
+                        if user_choice != 'y':
+                            print("Exiting the seating arrangement generator.")
+                            break
+                        # 🔹 Clear room status after each time slot
+                    else: 
+                        continue
+                    
+
+            elif exam_type == '2':#COMPRE TIME SLOTS different
+                unique_dates = room_data['Date'].unique()
+                for date in unique_dates:
+                    remove_room_status()
+                    print(f"\nProcessing all courses for date: {date}")
+
+                    courses_on_date = room_data[room_data['Date']==date].sort_values(by='courseno')
+                    if courses_on_date.empty:
+                        continue
+                    
+                    morning_courses = []
+                    afternoon_courses = []
+
+                    for _, course in courses_on_date.iterrows():
+                        start_time = course['Time'].split(" - ")[0]
+                        if "AM" in start_time:
+                            morning_courses.append(course)
+                        else:
+                            afternoon_courses.append(course)
+
+                    # Process morning courses
+                    for course in morning_courses:
+                        course_name = course['courseno']
+                        time_slot = course['Time']
+                        process_course(course_name, regdata, room_data, rooms_file_path, time_slot,date, seating_mode)
+
+                    remove_room_status()
+
+                    # Process afternoon courses
+                    for course in afternoon_courses:
+                        course_name = course['courseno']
+                        time_slot = course['Time']
+                        process_course(course_name, regdata, room_data, rooms_file_path, time_slot,date, seating_mode)
 
         elif choice =='n':
             save_errors()
-            print("Errors encountered: ", errors_dict)
+            #print("Errors encountered: ", errors_dict)
             print("Exiting the seating arrangement generator.")
             break
         else:
@@ -196,7 +252,7 @@ def process_course(course_name, regdata, room_data, rooms_file_path, time_slot, 
     Course_title = result['COURSE TITLE'].values[0]
     
     # Allocate seating and generate PDF for each course
-    output = allocate.allocate(room_list, regdata, course_name, date,time_slot)
+    output = allocate.allocate_rooms(room_list, regdata, course_name, date,time_slot)
     #print(f"OUTPUT HEAD for serial seating arrangment:\n", output.head())
     if seating_mode == "random":
         output = shuffle_within_rooms(output) #random within rooms
@@ -259,19 +315,10 @@ def shuffle_within_zones(df):
 
     return df_shuffled
 
-
-def save_errors():
-    print("Errors encountered in the program", errors_dict)
-    file_path = "errors_file.txt"
-    # Writing dictionary to a text file
-    with open(file_path, "w") as file:
-        for key, value in errors_dict.items():
-            file.write(f"{key}\n")
-    
-
 if __name__ == "__main__":
     reg_data_file_path = 'data\\erpdata.xlsx'
     rooms_file_path = 'data\\input-file-rooms.xlsx'
+    ics_file_path ='data\\ICs.xlsx'
     main(reg_data_file_path, rooms_file_path)
 
 
