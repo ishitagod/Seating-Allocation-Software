@@ -4,14 +4,13 @@ import os
 import random
 import re
 
-
 def remove_output_file():
     if os.path.exists("Output\\output_file.xlsx"):
             os.remove("Output\\output_file.xlsx")
 def remove_room_status():
       if os.path.exists("data\\room_status.csv"):
             os.remove("data\\room_status.csv")
-            
+
 #will add more later on! 
 errors_dict = {}
 #global
