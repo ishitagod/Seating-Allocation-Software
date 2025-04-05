@@ -232,12 +232,12 @@ def create_output_excel(output_df,file_path="Output\\output_file.xlsx"):
     for index, row in output_df.iterrows():
         matched_row = ic_df[ic_df['Subject_Catalog'] == row['Course']]
         if not matched_row.empty:
-            output_df.loc[index:, 'Instructor ID'] = matched_row['Instructor ID'].values[0]
+            output_df.loc[index:, 'PSRN'] = matched_row['PSRN'].values[0]
         else:
-            output_df.loc[index, 'Instructor ID'] = None
+            output_df.loc[index, 'PSRN'] = None
 
 
-    output_df = output_df[['Student ID', 'System ID', 'Student Name','Course', 'Course Title', 'Date', 'Time', 'Email','IC', 'Instructor ID','Room', 'Seat Number']]
+    output_df = output_df[['Student ID', 'System ID', 'Student Name','Course', 'Course Title', 'Date', 'Time', 'Email','IC', 'PSRN','Room', 'Seat Number']]
     if not os.path.exists(file_path):
         output_df.to_excel(file_path, index=False, sheet_name="Sheet1")
     else:
