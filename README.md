@@ -25,10 +25,15 @@ This project is a Seat Allocation Software designed to generate seating arrangem
 
 ## 🛠️ Prerequisites
 
+### Option 1: Manual Setup
 - Python 3.8 or higher
 - Node.js 16.x or higher (for frontend)
 - pip (Python package manager)
 - npm or yarn (Node package manager)
+
+### Option 2: Docker Setup (Recommended)
+- Docker Desktop (for Windows/macOS) or Docker Engine (for Linux)
+- Docker Compose (usually comes with Docker Desktop)
 
 ## 🚀 Quick Start
 
@@ -87,6 +92,54 @@ npm run dev
 
 Access the application at: http://localhost:3000
 
+## 🐳 Docker Setup (Recommended for Easy Deployment)
+
+### Prerequisites
+- Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for Windows/macOS) or Docker Engine (for Linux)
+- Ensure Docker Compose is installed (comes with Docker Desktop)
+
+### Quick Start with Docker
+
+1. **Clone the repository** (if you haven't already):
+   ```bash
+   git clone https://github.com/ishitagod/Seating-Allocation-Software.git
+   cd Seating-Allocation-Software
+   ```
+
+2. **Build and start the application**:
+   ```bash
+   docker-compose up --build
+   ```
+   This will:
+   - Build the Docker image with all dependencies
+   - Start both frontend and backend services
+   - Mount the necessary volumes for data persistence
+
+3. **Access the application**:
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:8000
+
+### Managing the Application
+
+- **Stop the application**: Press `Ctrl+C` in the terminal or run:
+  ```bash
+  docker-compose down
+  ```
+
+- **View logs**:
+  ```bash
+  docker-compose logs -f
+  ```
+
+- **Rebuild the application** (after making changes):
+  ```bash
+  docker-compose up --build
+  ```
+
+### Data Persistence
+- The `backend/data` directory is mounted as a volume, so your input files will persist between container restarts
+- Generated output files are stored in `backend/Output` and will also persist
+
 ## 📂 Project Structure
 
 ```
@@ -127,8 +180,3 @@ Seating-Allocation-Software/
 - **Port Already in Use**: If port 8000 is in use, update the port in `app.py` and frontend API calls
 - **Missing Dependencies**: Ensure all Python and Node.js dependencies are installed
 - **File Permissions**: Ensure the application has write access to the Output directory
-
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
