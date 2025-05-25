@@ -78,84 +78,86 @@ OUTPUT_FOLDER=./Output
 
 ## 🚀 Running the Application
 
-### Start Backend Server
-```bash
-# From backend directory
-python app.py
-```
+### Seating Allocation Software
 
-### Start Frontend Development Server
-```bash
-# From exam-seating-app directory
-npm run dev
-```
+A web application for generating seating arrangements for BITS Pilani examinations.
 
-Access the application at: http://localhost:3000
+## Features
 
-## 🐳 Docker Setup (Recommended for Easy Deployment)
+- Upload Excel files for rooms, exams, and student data
+- Generate seating arrangements based on different criteria
+- Download results as Excel files
+- Simple and intuitive user interface
 
-### Prerequisites
-- Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for Windows/macOS) or Docker Engine (for Linux)
-- Ensure Docker Compose is installed (comes with Docker Desktop)
+## Prerequisites
 
-### Quick Start with Docker
+- Python 3.8+
+- Node.js 14+
+- npm or yarn
 
-1. **Clone the repository** (if you haven't already):
+## Getting Started
+
+### Backend Setup
+
+1. Create a virtual environment:
    ```bash
-   git clone https://github.com/ishitagod/Seating-Allocation-Software.git
-   cd Seating-Allocation-Software
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
-2. **Build and start the application**:
+2. Install dependencies:
    ```bash
-   docker-compose up --build
+   cd backend
+   pip install -r requirements.txt
    ```
-   This will:
-   - Build the Docker image with all dependencies
-   - Start both frontend and backend services
-   - Mount the necessary volumes for data persistence
 
-3. **Access the application**:
-   - Frontend: http://localhost:3000
-   - Backend API: http://localhost:8000
+3. Run the Flask server:
+   ```bash
+   flask run --port=8000
+   ```
 
-### Managing the Application
+### Frontend Setup
 
-- **Stop the application**: Press `Ctrl+C` in the terminal or run:
-  ```bash
-  docker-compose down
-  ```
+1. Install dependencies:
+   ```bash
+   cd exam-seating-app
+   npm install
+   ```
 
-- **View logs**:
-  ```bash
-  docker-compose logs -f
-  ```
+2. Start the development server:
+   ```bash
+   npm run dev
+   ```
 
-- **Rebuild the application** (after making changes):
-  ```bash
-  docker-compose up --build
-  ```
+3. Open your browser to `http://localhost:5173`
 
-### Data Persistence
-- The `backend/data` directory is mounted as a volume, so your input files will persist between container restarts
-- Generated output files are stored in `backend/Output` and will also persist
+## Usage
 
-## 📂 Project Structure
+1. Fill in the output file name
+2. Upload the required Excel files:
+   - Rooms-Exams file
+   - ERP Student Data
+   - ICs Data
+3. Select exam type and output mode
+4. Click "Generate Seating Arrangement"
+5. Download the results when processing is complete
+
+## Project Structure
 
 ```
-Seating-Allocation-Software/
-├── backend/               # Backend Python code
-│   ├── data/             # Sample data files
-│   ├── Output/           # Generated output files
-│   ├── app.py            # Main Flask application
-│   ├── allocate.py       # Core allocation logic
-│   └── requirements.txt  # Python dependencies
-├── exam-seating-app/     # Frontend React application
-└── README.md             # This file
+.
+├── backend/               # Flask backend
+│   ├── app.py             # Main application
+│   ├── requirements.txt   # Python dependencies
+│   └── ...
+├── exam-seating-app/      # React frontend
+│   ├── src/
+│   │   ├── components/    # React components
+│   │   ├── App.tsx       # Main component
+│   │   └── ...
+│   └── ...
+├── README.md
 ```
-
-## For users
-
 1. **Input Files**:
    - `erpdata.xlsx`: Student registration data
    - `input-file-rooms.xlsx`: Room capacity and details

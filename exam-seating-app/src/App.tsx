@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "./utils/api";
 import Dropdown, { DropdownOption } from "./components/Dropdown";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min";
@@ -38,7 +38,7 @@ function App() {
     
     try {
       setLoading(true);
-      const response = await axios.post('http://localhost:8000/clear-output');
+      const response = await api.post('/clear-output');
       
       if (response.data.success) {
         const message = response.data.cleared_files > 0 
@@ -112,7 +112,7 @@ function App() {
     try {
       // Create a temporary link element
       const link = document.createElement('a');
-      link.href = 'http://localhost:8000/download-output';
+      link.href = '/api/download-output';
       link.download = 'seating_arrangement_output.zip';
       
       // Trigger the download
@@ -125,9 +125,7 @@ function App() {
     }
   };
 
-  // Get label for selected exam type
-  const selectedExamLabel =
-    examOptions.find((opt) => opt.value === examType)?.label || "Exam";
+  // Removed unused selectedExamLabel
 
   // Helper to format date with day
   const getFormattedDateWithDay = (dateStr: string) => {
@@ -193,7 +191,7 @@ function App() {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (isProcessing) {
         // Try to stop the backend process
-        axios.post('http://localhost:8000/stop-process')
+        api.post('/stop-process')
           .catch(console.error);
         // Standard way to show confirmation dialog
         e.preventDefault();
@@ -233,18 +231,6 @@ function App() {
       formData.append("date", getFormattedDateWithDay(dateInput));
     }
     try {
-      setLoading(true);
-      setIsProcessing(true);
-      setResultMsg(null);
-      setErrorMsg(null);
-
-      const response = await axios.post(
-        "http://localhost:8000/upload-files",
-        formData
-      );
-      setResultMsg(
-        `✅ ${response.data.message} Please download and unzip files.\n`
-      );
     } catch (err: any) {
       // try to pull our JSON‑logged traceback if present
       console.error(err);
@@ -524,7 +510,7 @@ function App() {
                                       formData.append('room_files', file);
                                     });
 
-                                    const response = await axios.post('http://localhost:8000/upload-room-data', formData, {
+                                    const response = await api.post('/upload-room-data', formData, {
                                       headers: {
                                         'Content-Type': 'multipart/form-data',
                                       },
