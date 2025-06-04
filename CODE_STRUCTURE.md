@@ -1,6 +1,7 @@
 # Seating Allocation Software – Code Structure & Developer Guide
 
 ## Project Overview
+
 This application automates the allocation of exam seating using uploaded data files. The backend is built with Flask (Python), and the frontend is a modern JavaScript app (likely using Vite + React or SvelteKit). This document explains the codebase for new developers.
 
 ---
@@ -33,9 +34,11 @@ Seating_Allocation_Software/
 ## Backend Overview
 
 ### 1. `app.py` (Flask API)
+
 Main entry point for the backend, handling HTTP requests and responses.
 
 #### Key Endpoints:
+
 - `/upload-files` (POST): Uploads exam, ERP, and ICS files; triggers seat allocation in a subprocess.
 - `/preview-output` (GET): Returns a preview of the generated output.
 - `/download-output` (GET): Zips and sends output files for download.
@@ -44,34 +47,42 @@ Main entry point for the backend, handling HTTP requests and responses.
 - `/stop-process` (POST): Stops any running seat allocation process.
 
 ### 2. `main.py` (Core Logic)
+
 Orchestrates the seat allocation process based on input files and parameters.
 
 #### Key Functions:
+
 - **main()**: Entry point for allocation logic. Handles different modes (time slot, course number, or day).
 - **process_course()**: Allocates seats and generates outputs for a specific course.
 - **shuffle_within_rooms() / shuffle_within_zones()**: Shuffles students for randomization.
 - **assign_zones()**: Assigns zones to rooms.
 
 ### 3. `allocate.py` (Room Allocation)
+
 Handles room allocation logic and seat assignments.
 
 #### Key Functions:
+
 - **allocate_rooms()**: Main function for assigning students to rooms.
 - **update_room_csv()**: Manages room status tracking.
 - **load_lt_seating_arrangement()**: Handles LT room seating arrangements.
 
 ### 4. `allocate_ops.py` (Allocation Operations)
+
 Contains helper functions for room allocation.
 
 #### Key Functions:
+
 - **read_room_status()**: Reads room status from CSV.
 - **update_room_status()**: Updates room status during allocation.
 - **get_available_seats()**: Calculates available seats in a room.
 
 ### 5. `main_ops.py` (Main Operations)
+
 Handles data cleaning and validation.
 
 #### Key Functions:
+
 - **clean_reg_data()**: Cleans and processes ERP data.
 - **read_rooms()**: Reads room allocation data.
 - **validate_time_slot()**: Validates time slot format.
@@ -79,9 +90,11 @@ Handles data cleaning and validation.
 - **validate_date()**: Validates date format.
 
 ### 6. `output.py` (Output Generation)
+
 Handles PDF and Excel output generation.
 
 #### Key Functions:
+
 - **create_pdf()**: Generates IC PDFs.
 - **create_output_excel()**: Creates master Excel output.
 - **generate_room_pdfs()**: Creates room-specific PDFs.
@@ -89,22 +102,27 @@ Handles PDF and Excel output generation.
 - **combine_pdfs()**: Combines multiple PDFs into one.
 
 ### 7. `output_ops.py` (Output Operations)
+
 Contains helper functions for output generation.
 
 #### Key Functions:
+
 - **prepare_pdf_data()**: Prepares data for PDF generation.
 - **format_output_data()**: Formats data for Excel output.
 - **generate_header()**: Creates PDF headers.
 
 ### 8. `shared.py` (Shared Utilities)
+
 Contains shared constants, utility functions and modules.
 
 #### Key Constants:
+
 - **CC_lab**: Configuration for CC lab rooms.
 - **ROOM_DATA_FOLDER**: Path to room data.
 - **ROOM_STATUS_FILE_PATH**: Path to room status file.
 
 #### Key Functions:
+
 - **read_room_status()**: Reads room status.
 - **update_room_status()**: Updates room status.
 - **get_room_capacity()**: Gets room capacity.
@@ -114,6 +132,7 @@ Contains shared constants, utility functions and modules.
 ## Backend Function Map
 
 ### app.py
+
 - `upload_files()`: Handles file uploads, validates inputs, saves files, starts seat allocation process (calls `main.main`).
 - `preview_output()`: Returns first 5 rows of output Excel as JSON.
 - `download_output()`: Zips and sends output directory.
@@ -123,17 +142,20 @@ Contains shared constants, utility functions and modules.
 - `cleanup()`: Ensures clean exit and process termination on signals.
 
 ### main.py
+
 - `main()`: Orchestrates allocation based on mode (time, course, day), loads data, calls `process_course()`.
 - `process_course()`: Allocates seats and generates output for a course.
 - `shuffle_within_rooms()`, `shuffle_within_zones()`: Shuffle students for randomization.
 - `assign_zones()`: Assigns zones to rooms.
 
 ### allocate.py
+
 - `allocate_rooms()`: Main room allocation function.
 - `update_room_csv()`: Manages room status.
 - `load_lt_seating_arrangement()`: Handles LT room seating.
 
 ### output.py
+
 - `create_pdf()`: Generates IC PDFs.
 - `create_output_excel()`: Creates master Excel.
 - `generate_room_pdfs()`: Creates room-specific PDFs.
@@ -142,6 +164,7 @@ Contains shared constants, utility functions and modules.
 ---
 
 ## How to Extend/Modify
+
 - **To add a new endpoint:**
   - Define a new Flask route in `app.py`.
   - Implement logic or call helpers as needed.
@@ -156,10 +179,10 @@ Contains shared constants, utility functions and modules.
 
 ## Backend Flowchart (In Mermaid Syntax)
 
-```mermaid
+````mermaid
 flowchart TD
     A[Frontend Request] -->|/upload-files| B[Flask: upload_files]
-    B --> C[Start Process: main.main()]
+    B --> C[Start Process: main]
     C --> D{Output Mode}
     D -->|time| E[Process all courses in time slot]
     D -->|course_number| F[Process single course]
@@ -182,6 +205,7 @@ flowchart TD
 ---
 
 ## Notes for Developers
+
 - All file paths are relative to the backend directory.
 - Long-running processes are managed using Python’s multiprocessing.
 - Outputs are stored in the `Output/` directory.
@@ -191,3 +215,4 @@ flowchart TD
 ---
 
 For further details, see inline comments in each file or contact the project maintainer.
+````
