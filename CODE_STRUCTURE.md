@@ -229,20 +229,20 @@ flowchart TD
     SP3 -->|Error| SP6[Handle Error]
     
     %% Style Definitions
-    classDef default fill:#f9f,stroke:#333,stroke-width:2px
-    classDef input fill:#bbf,stroke:#333,stroke-width:2px
-    classDef process fill:#bfb,stroke:#333,stroke-width:2px
-    classDef decision fill:#fbb,stroke:#333,stroke-width:2px
-    classDef output fill:#bfb,stroke:#333,stroke-width:2px
-    classDef error fill:#fbb,stroke:#333,stroke-width:2px
+    classDef default fill:#fff,stroke:#000,stroke-width:2px
+    classDef input fill:#fff,stroke:#000,stroke-width:2px
+    classDef process fill:#fff,stroke:#000,stroke-width:2px
+    classDef decision fill:#fff,stroke:#000,stroke-width:2px
+    classDef output fill:#fff,stroke:#000,stroke-width:2px
+    classDef error fill:#fff,stroke:#000,stroke-width:2px
     
     %% Apply Styles
-    class UI1,UI2,UI3 input
-    class P1,P2,P3,RA1 process
-    class RA2,RA3,SP2,SP3 decision
-    class OG1,OG2,OG3,OG4,OG5 output
-    class EH1,EH2,EH3,EH4 error
-    class SP1,SP4,SP5,SP6 process
+    class UI1,UI2,UI3 default
+    class P1,P2,P3,RA1 default
+    class RA2,RA3,SP2,SP3 default
+    class OG1,OG2,OG3,OG4,OG5 default
+    class EH1,EH2,EH3,EH4 default
+    class SP1,SP4,SP5,SP6 default
 ```
 
 ---
