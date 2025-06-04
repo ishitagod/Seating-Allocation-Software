@@ -22,6 +22,9 @@ This project is a Seat Allocation Software designed to generate seating arrangem
   - Combined PDF for all rooms
   - Error logging and validation
   - Input format validation
+## Code Documentation
+
+- For detailed code documentation and developer guide, see [CODE_STRUCTURE.md](CODE_STRUCTURE.md)
 
 ## 🛠️ Prerequisites
 
