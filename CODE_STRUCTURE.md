@@ -179,7 +179,7 @@ Contains shared constants, utility functions and modules.
 
 ## Backend Flowchart (In Mermaid Syntax)
 
-````mermaid
+```mermaid
 flowchart TD
     A[Frontend Request] -->|/upload-files| B[Flask: upload_files]
     B --> C[Start Process: main]
@@ -215,4 +215,7 @@ flowchart TD
 ---
 
 For further details, see inline comments in each file or contact the project maintainer.
-````
+
+```
+
+```
