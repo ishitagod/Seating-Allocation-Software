@@ -181,25 +181,68 @@ Contains shared constants, utility functions and modules.
 
 ```mermaid
 flowchart TD
-    A[Frontend Request] -->|/upload-files| B[Flask: upload_files]
-    B --> C[Start Process: main]
-    C --> D{Output Mode}
-    D -->|time| E[Process all courses in time slot]
-    D -->|course_number| F[Process single course]
-    D -->|day| G[Process all courses on date]
-    E --> H[process_course]
-    F --> H
-    G --> H
-    H --> I[shuffle_within_rooms / shuffle_within_zones]
-    H --> J[assign_zones]
-    H --> K[Generate Output]
-    K --> L[Output Folder]
-    B --> M[Other Endpoints]
-    M -->|/preview-output| N[Preview Output]
-    M -->|/download-output| O[Download Output]
-    M -->|/clear-output| P[Clear Output]
-    M -->|/upload-room-data| Q[Upload Room Data]
-    M -->|/stop-process| R[Stop Process]
+    %% User Inputs
+    UI1[Exam Type] --> UI2[Exam Title]
+    UI3{Seating Mode} -->|Serial| S1[Serial]
+    UI3 -->|Random| S2[Random]
+    UI3 -->|Zone| S3[Zone]
+    
+    %% File Upload & Processing
+    FU1[Upload Files] --> FU2{Validate Files}
+    FU2 -->|Valid| FU3[Save Files]
+    FU2 -->|Invalid| EH1[Log Error]
+    
+    %% Main Process
+    A[Start Process] -->|ERP| P1[Clean ERP Data]
+    A -->|Rooms| P2[Process Rooms]
+    A -->|ICS| P3[Process ICS]
+    
+    %% Course Selection
+    CP1{Select Courses} -->|Time| T1[Get Time Slot]
+    CP1 -->|Course| C1[Get Course]
+    CP1 -->|Date| D1[Get Date]
+    
+    %% Room Allocation
+    RA1[Allocate Rooms] --> RA2{Check Room}
+    RA2 -->|Valid| RA3{Check Capacity}
+    RA3 -->|Yes| RA4[Allocate]
+    RA4 -->|Serial| S1
+    RA4 -->|Random| S2
+    RA4 -->|Zone| S3
+    
+    %% Output Generation
+    OG1[Generate Output] --> OG2[IC PDF]
+    OG1 --> OG3[Room PDFs]
+    OG1 --> OG4[Attendance]
+    OG1 --> OG5[Excel]
+    
+    %% Error Handling
+    EH1 --> EH2{Process Error}
+    EH2 -->|Error| EH3[Log Error]
+    EH2 -->|Success| EH4[Continue]
+    
+    %% Process Management
+    SP1[Start Process] --> SP2{Monitor}
+    SP2 -->|Running| SP3[Check Status]
+    SP2 -->|Error| SP4[Log Error]
+    SP3 -->|Complete| SP5[Generate Output]
+    SP3 -->|Error| SP6[Handle Error]
+    
+    %% Style Definitions
+    classDef default fill:#f9f,stroke:#333,stroke-width:2px
+    classDef input fill:#bbf,stroke:#333,stroke-width:2px
+    classDef process fill:#bfb,stroke:#333,stroke-width:2px
+    classDef decision fill:#fbb,stroke:#333,stroke-width:2px
+    classDef output fill:#bfb,stroke:#333,stroke-width:2px
+    classDef error fill:#fbb,stroke:#333,stroke-width:2px
+    
+    %% Apply Styles
+    class UI1,UI2,UI3 input
+    class P1,P2,P3,RA1 process
+    class RA2,RA3,SP2,SP3 decision
+    class OG1,OG2,OG3,OG4,OG5 output
+    class EH1,EH2,EH3,EH4 error
+    class SP1,SP4,SP5,SP6 process
 ```
 
 ---
