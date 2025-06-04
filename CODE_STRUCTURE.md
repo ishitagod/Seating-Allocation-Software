@@ -171,7 +171,12 @@ flowchart TD
     H --> J[assign_zones]
     H --> K[Generate Output]
     K --> L[Output Folder]
-    B --> M[/preview-output, /download-output, /clear-output, /upload-room-data, /stop-process]
+    B --> M[Other Endpoints]
+    M -->|/preview-output| N[Preview Output]
+    M -->|/download-output| O[Download Output]
+    M -->|/clear-output| P[Clear Output]
+    M -->|/upload-room-data| Q[Upload Room Data]
+    M -->|/stop-process| R[Stop Process]
 ```
 
 ---
