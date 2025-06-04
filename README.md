@@ -25,15 +25,10 @@ This project is a Seat Allocation Software designed to generate seating arrangem
 
 ## 🛠️ Prerequisites
 
-### Option 1: Manual Setup
 - Python 3.8 or higher
 - Node.js 16.x or higher (for frontend)
 - pip (Python package manager)
 - npm or yarn (Node package manager)
-
-### Option 2: Docker Setup (Recommended)
-- Docker Desktop (for Windows/macOS) or Docker Engine (for Linux)
-- Docker Compose (usually comes with Docker Desktop)
 
 ## 🚀 Quick Start
 
@@ -78,86 +73,36 @@ OUTPUT_FOLDER=./Output
 
 ## 🚀 Running the Application
 
-### Seating Allocation Software
+### Start Backend Server
+```bash
+# From backend directory
+python app.py
+```
 
-A web application for generating seating arrangements for BITS Pilani examinations.
+### Start Frontend Development Server
+```bash
+# From exam-seating-app directory
+npm run dev
+```
 
-## Features
+Access the application at: http://localhost:3000
 
-- Upload Excel files for rooms, exams, and student data
-- Generate seating arrangements based on different criteria
-- Download results as Excel files
-- Simple and intuitive user interface
-
-## Prerequisites
-
-- Python 3.8+
-- Node.js 14+
-- npm or yarn
-
-## Getting Started
-
-### Backend Setup
-
-1. Create a virtual environment:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-2. Install dependencies:
-   ```bash
-   cd backend
-   pip install -r requirements.txt
-   ```
-
-3. Run the Flask server:
-   ```bash
-   flask run --port=8000
-   ```
-
-### Frontend Setup
-
-1. Install dependencies:
-   ```bash
-   cd exam-seating-app
-   npm install
-   ```
-
-2. Start the development server:
-   ```bash
-   npm run dev
-   ```
-
-3. Open your browser to `http://localhost:5173`
-
-## Usage
-
-1. Fill in the output file name
-2. Upload the required Excel files:
-   - Rooms-Exams file
-   - ERP Student Data
-   - ICs Data
-3. Select exam type and output mode
-4. Click "Generate Seating Arrangement"
-5. Download the results when processing is complete
-
-## Project Structure
+## 📂 Project Structure
 
 ```
-.
-├── backend/               # Flask backend
-│   ├── app.py             # Main application
-│   ├── requirements.txt   # Python dependencies
-│   └── ...
-├── exam-seating-app/      # React frontend
-│   ├── src/
-│   │   ├── components/    # React components
-│   │   ├── App.tsx       # Main component
-│   │   └── ...
-│   └── ...
-├── README.md
+Seating-Allocation-Software/
+├── backend/               # Backend Python code
+│   ├── data/             # Sample data files
+│   ├── Output/           # Generated output files
+│   ├── app.py            # Main Flask application
+│   ├── allocate.py       # Core allocation logic
+│   └── requirements.txt  # Python dependencies
+├── exam-seating-app/     # Frontend React application
+└── README.md             # This file
 ```
+
+## For users
+
 1. **Input Files**:
    - `erpdata.xlsx`: Student registration data
    - `input-file-rooms.xlsx`: Room capacity and details
