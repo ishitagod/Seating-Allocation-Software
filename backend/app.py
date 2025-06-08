@@ -309,9 +309,17 @@ def cleanup(signum, frame):
     if current_process and current_process.is_alive():
         current_process.terminate()
         current_process.join()
-    exit(0)
-
-# Register signal handlers
+    
+    # Clean up cleaned_erpdata.xlsx if it exists
+    cleaned_erp_path = os.path.join(UPLOAD_FOLDER, "cleaned_erpdata.xlsx")
+    if os.path.exists(cleaned_erp_path):
+        try:
+            os.remove(cleaned_erp_path)
+            print(f"Cleaned up {cleaned_erp_path}")
+        except Exception as e:
+            print(f"Error cleaning up {cleaned_erp_path}: {e}")
+    
+    # Clean up any other resources if needed
 signal.signal(signal.SIGINT, cleanup)
 signal.signal(signal.SIGTERM, cleanup)
 
