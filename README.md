@@ -33,15 +33,24 @@ This project is a Seat Allocation Software designed to generate seating arrangem
 - pip (Python package manager)
 - npm or yarn (Node package manager)
 
-## 🚀 Quick Start
+## Set Up
 
-### 1. Clone the Repository
+### Option 1: One-Click Start (Recommended)
+
+1. Double-click the `start.bat` file in the project root
+2. Wait for both backend and frontend to start (this may take a few minutes on first run)
+3. The application should automatically open in your default browser at http://localhost:5173
+
+If the browser doesn't open automatically, you can manually navigate to http://localhost:5173
+
+### Option 2: Manual Set Up
+#### 1. Clone the Repository
 ```bash
 git clone https://github.com/ishitagod/Seating-Allocation-Software.git
 cd Seating-Allocation-Software
 ```
 
-### 2. Backend Setup
+#### 2. Backend Setup
 ```bash
 # Navigate to backend directory
 cd backend
@@ -57,7 +66,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 3. Frontend Setup
+#### 3. Frontend Setup
 ```bash
 # Navigate to frontend directory
 cd ../exam-seating-app
@@ -66,7 +75,7 @@ cd ../exam-seating-app
 npm install
 ```
 
-### 4. Configure Environment
+#### 4. Configure Environment
 Create a `.env` file in the `backend` directory with the following variables:
 ```
 FLASK_APP=app.py
@@ -74,15 +83,15 @@ FLASK_ENV=development
 OUTPUT_FOLDER=./Output
 ```
 
-## 🚀 Running the Application
+### 🚀 Running the Application
 
-### Start Backend Server
+#### Start Backend Server
 ```bash
 # From backend directory
 python app.py
 ```
 
-### Start Frontend Development Server
+#### Start Frontend Development Server
 ```bash
 # From exam-seating-app directory
 npm run dev
