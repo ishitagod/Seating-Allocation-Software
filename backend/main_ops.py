@@ -11,7 +11,15 @@ def save_errors():
             file.write(f"{key}\n")
     
 def clean_reg_data(file_path):
-    df = pd.read_excel(file_path, skiprows=1, header=0) #change this when interface
+    # Ensure data directory exists
+    data_dir = os.path.join(os.path.dirname(__file__), '..', 'data')
+    os.makedirs(data_dir, exist_ok=True)
+    
+    # Define output path
+    output_path = os.path.join(data_dir, 'cleaned_erpdata.xlsx')
+    
+    # Read input file
+    df = pd.read_excel(file_path, skiprows=1, header=0)
 
     #from Grade In column remove DP, W and RC entries
     grades_to_remove = ['DP', 'W', 'RC']

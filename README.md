@@ -40,6 +40,7 @@ This project is a Seat Allocation Software designed to generate seating arrangem
 1. Double-click the `start.bat` file in the project root
 2. Wait for both backend and frontend to start (this may take a few minutes on first run)
 3. The application should automatically open in your default browser at http://localhost:5173
+4. To stop the application, press Q in the frontend window
 
 If the browser doesn't open automatically, you can manually navigate to http://localhost:5173
 

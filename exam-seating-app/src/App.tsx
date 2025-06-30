@@ -110,18 +110,42 @@ function App() {
   // Function to handle download
   const handleDownload = async () => {
     try {
-      // Create a temporary link element
-      const link = document.createElement('a');
-      link.href = '/api/download-output';
-      link.download = 'seating_arrangement_output.zip';
+      setLoading(true);
+      setErrorMsg(null);
       
-      // Trigger the download
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      setErrorMsg('Failed to download the output. Please try again.');
+      // Create a temporary link element
+      const response = await api.get('/download-output', {
+        responseType: 'blob', // Important for file downloads
+      });
+      
+      // Check if we got a blob response (file)
+      if (response.data instanceof Blob) {
+        // Create a URL for the blob
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'seating_arrangement_output.zip');
+        document.body.appendChild(link);
+        link.click();
+        
+        // Clean up
+        link.remove();
+        window.URL.revokeObjectURL(url);
+        
+        setResultMsg('Download started successfully!');
+      } else {
+        // If it's not a blob, it might be an error message
+        const errorData = await new Response(response.data).json();
+        throw new Error(errorData.error || 'Failed to download file');
+      }
+    } catch (error: any) {
       console.error('Download error:', error);
+      const errorMessage = error.response?.data?.error || 
+                         error.message || 
+                         'Failed to download the output. Please try again.';
+      setErrorMsg(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -231,13 +255,69 @@ function App() {
       formData.append("date", getFormattedDateWithDay(dateInput));
     }
     try {
+      console.log('Starting form submission...');
+      setLoading(true);
+      setIsProcessing(true);
+      setResultMsg(null);
+      setErrorMsg(null);
+
+      // Log form data for debugging
+      console.log('Form data prepared. Files:', {
+        roomsExamsFile: roomsExamsFile?.name,
+        erpDataFile: erpDataFile?.name,
+        icsDataFile: icsDataFile?.name,
+        examType,
+        outputName,
+        seatingArrangement,
+        outputMode,
+        dateInput,
+        timeSlotInput,
+        courseNumberInput
+      });
+
+      const response = await api.post('/upload-files', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      console.log('API Response:', response);
+      
+      if (response.data.message) {
+        setResultMsg(response.data.message);
+      }
     } catch (err: any) {
-      // try to pull our JSON‑logged traceback if present
-      console.error(err);
-      const data = err.response?.data;
-      const trace = data?.traceback ? `\n\nTrace:\n${data.traceback}` : "";
-      setErrorMsg(`❌ ${data?.error || err.message}${trace}`);
+      console.error('Detailed error:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+        statusText: err.response?.statusText,
+        config: {
+          url: err.config?.url,
+          method: err.config?.method,
+          headers: err.config?.headers
+        }
+      });
+      
+      let errorMessage = 'An error occurred while processing your request';
+      
+      if (err.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        errorMessage = err.response.data?.error || 
+                     err.response.data?.message || 
+                     `Server responded with status ${err.response.status}`;
+      } else if (err.request) {
+        // The request was made but no response was received
+        errorMessage = 'No response from server. Please check if the backend is running.';
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        errorMessage = err.message || 'Error in setting up the request';
+      }
+      
+      setErrorMsg(`❌ ${errorMessage}`);
     } finally {
+      console.log('Form submission completed');
       setLoading(false);
       setIsProcessing(false);
     }

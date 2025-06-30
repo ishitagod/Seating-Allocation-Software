@@ -12,8 +12,11 @@ from multiprocessing import Process, current_process
 from main import main as process_main
 
 # Initialize Flask app
+# app = Flask(__name__)
+# CORS(app)
 app = Flask(__name__)
-CORS(app)
+# Allow all origins for development
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Global variable to track the current process
 current_process = None

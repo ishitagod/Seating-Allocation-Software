@@ -1,83 +1,114 @@
 @echo off
-REM ============================================
-REM Seat Allocation Software - Start Script
-REM ============================================
+SETLOCAL ENABLEDELAYEDEXPANSION
 
-SETLOCAL
+:: ============================================
+:: Seat Allocation Software - Start Script
+:: ============================================
 
-REM ─────────────────────────────────────────────
-REM 1) Set Paths
-REM ─────────────────────────────────────────────
+:: Check for required commands
+where python >nul 2>nul
+if %ERRORLEVEL% NEQ 0 (
+    echo [ERROR] Python is not installed or not in PATH
+    pause
+    exit /b 1
+)
+
+where node >nul 2>nul
+if %ERRORLEVEL% NEQ 0 (
+    echo [ERROR] Node.js is not installed or not in PATH
+    pause
+    exit /b 1
+)
+
+:: Set Paths and Variables
 SET "ROOT=%~dp0"
 SET "BACKEND_DIR=%ROOT%backend"
 SET "FRONTEND_DIR=%ROOT%exam-seating-app"
 SET "VENV_ACTIVATE=%ROOT%venv\Scripts\activate.bat"
+SET "BACKEND_URL=http://localhost:8000"
+SET "FRONTEND_URL=http://localhost:5173"
 
-REM ─────────────────────────────────────────────
-REM 2) Check if directories exist
-REM ─────────────────────────────────────────────
+:: Check if directories exist
 if not exist "%BACKEND_DIR%" (
-    echo Error: Backend directory not found at %BACKEND_DIR%
+    echo [ERROR] Backend directory not found at %BACKEND_DIR%
     pause
     exit /b 1
 )
 
 if not exist "%FRONTEND_DIR%" (
-    echo Error: Frontend directory not found at %FRONTEND_DIR%
+    echo [ERROR] Frontend directory not found at %FRONTEND_DIR%
     pause
     exit /b 1
 )
 
-REM ─────────────────────────────────────────────
-REM 3) Setup Python Virtual Environment
-REM ─────────────────────────────────────────────
+:: Setup Python Virtual Environment
 if not exist "%ROOT%venv" (
-    echo Creating virtual environment...
+    echo [INFO] Creating virtual environment...
     python -m venv "%ROOT%venv"
-    if errorlevel 1 (
-        echo Failed to create virtual environment
+    if !ERRORLEVEL! NEQ 0 (
+        echo [ERROR] Failed to create virtual environment
         pause
         exit /b 1
     )
     call "%VENV_ACTIVATE%"
-    echo Installing Python dependencies...
+    echo [INFO] Installing Python dependencies...
     pip install -r "%ROOT%requirements.txt"
-) else (
-    call "%VENV_ACTIVATE%"
+    if !ERRORLEVEL! NEQ 0 (
+        echo [ERROR] Failed to install Python dependencies
+        pause
+        exit /b 1
+    )
 )
 
-REM ─────────────────────────────────────────────
-REM 4) Start Backend Server (hidden)
-REM ─────────────────────────────────────────────
-start "" /B cmd /c "cd /d "%BACKEND_DIR%" && python app.py"
+:: Start Backend Server
+echo [INFO] Starting backend server...
+start "Backend" cmd /k "cd /d "%BACKEND_DIR%" && call "%VENV_ACTIVATE%" && python app.py || (echo [ERROR] Backend failed to start && pause)"
 
-REM ─────────────────────────────────────────────
-REM 5) Start Frontend in a new window
-REM ─────────────────────────────────────────────
-start "Frontend" cmd /k "@echo off && cd /d "%FRONTEND_DIR%" && echo [FRONTEND] Installing dependencies... && npm install && echo [FRONTEND] Starting development server... && start http://localhost:5173 && echo [FRONTEND] Server starting on http://localhost:5173 && npm run dev"
+:: Start Frontend
+timeout /t 2 /nobreak >nul
+echo [INFO] Starting frontend development server...
+if not exist "%FRONTEND_DIR%\node_modules" (
+    echo [INFO] Installing frontend dependencies...
+    cd /d "%FRONTEND_DIR%" && npm install
+    if !ERRORLEVEL! NEQ 0 (
+        echo [ERROR] Failed to install frontend dependencies
+        pause
+        exit /b 1
+    )
+)
 
-REM ─────────────────────────────────────────────
-REM 6) Wait for backend to start
-REM ─────────────────────────────────────────────
-timeout /t 5 /nobreak >nul
+start "Frontend" cmd /k "cd /d "%FRONTEND_DIR%" && echo [FRONTEND] Starting development server... && start "" "%FRONTEND_URL%" && npm run dev || (echo [ERROR] Frontend failed to start && pause)"
 
-REM ─────────────────────────────────────────────
-REM 7) Show completion message
-REM ─────────────────────────────────────────────
-echo.
+:: Show completion message
+cls
 echo ============================================
-echo  Seat Allocation Software is starting...
-echo  - Backend:  http://localhost:8000
-echo  - Frontend: http://localhost:5173
-echo.
-echo  Please check the frontend window for progress.
-echo  If browser doesn't open automatically, please open:
-echo  http://localhost:5173 manually
-echo.
-echo  Note: First startup may take a few minutes for dependencies.
-echo.
-echo  Press any key to close this window.
+echo  SEAT ALLOCATION SOFTWARE - RUNNING
 echo ============================================
-pause > nul
+echo.
+echo  [STATUS] Application is running in separate windows
+echo.
+echo  - Backend:  %BACKEND_URL%
+echo  - Frontend: %FRONTEND_URL%
+echo.
+echo  [INSTRUCTIONS]
+echo  1. Check both console windows for any errors
+echo  2. The application should open in your default browser
+echo  3. If not, manually open: %FRONTEND_URL%
+echo  4. Close all windows to stop the application
+echo.
+echo  [TROUBLESHOOTING]
+echo  - If you see any errors in the console windows:
+echo    1. Take note of the error message
+echo    2. Close all console windows
+:wait
+choice /c Q /m "Press Q to quit and close all windows"
+if errorlevel 2 goto wait
+
+echo.
+echo [INFO] Cleaning up...
+taskkill /F /FI "WINDOWTITLE eq Backend*" >nul 2>&1
+taskkill /F /FI "WINDOWTITLE eq Frontend*" >nul 2>&1
+taskkill /F /FI "WINDOWTITLE eq npm*" >nul 2>&1
+echo [INFO] All processes have been terminated.
 
 ENDLOCAL
