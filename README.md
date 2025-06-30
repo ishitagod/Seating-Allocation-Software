@@ -1,10 +1,10 @@
-Seat Allocation Software
+# Seat Allocation Software
 
 📌 Project Overview
 
 This project is a Seat Allocation Software designed to generate seating arrangements for BITS Pilani examinations. It allows users to allocate students into rooms based on course schedules and provides the option for serial or randomized seating within rooms or zones. The software also generates PDF seating plans for instructors and students.
 
-**_NOTE_**: _Data files have been removed for security reasons._
+**_NOTE_**: _Data files follow a strict format and have been removed for security reasons._
 
 🚀 Features
 
