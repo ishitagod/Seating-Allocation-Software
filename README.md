@@ -1,4 +1,4 @@
-Seat Allocation Software
+# Seat Allocation Software
 
 📌 Project Overview
 
